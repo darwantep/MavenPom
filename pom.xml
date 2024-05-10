@@ -1,0 +1,413 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>fr.bpce.ibp.aen.cfn</groupId>
+	<artifactId>cfn-rest-server</artifactId>
+	<packaging>war</packaging>
+	<version>1.0.3</version>
+	<name>cfn-rest-server</name>
+
+	<distributionManagement>
+        <repository>
+            <id>ibccn-releases</id>
+            <name>[ARTIFACTORY] Dépôt Maven IBCCN (Release)</name>
+            <url>https://artifactory.mycloud.intrabpce.fr/artifactory/IBCCN-maven-releases/</url>
+        </repository>
+        <snapshotRepository>
+            <id>ibccn-snapshots</id>
+            <name>[ARTIFACTORY] Dépôt Maven IBCCN (Snapshot)</name>
+ 			<url>https://artifactory.mycloud.intrabpce.fr/artifactory/IBCCN-maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+    
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<resource.path>src/main/resources</resource.path>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+		
+		<!-- Versions des librairies -->
+		<tika.version>2.7.0</tika.version>
+		<nimbus-jose-jwt.version>8.23</nimbus-jose-jwt.version>
+		<opensaml.version>2.6.4</opensaml.version>
+		<json.version>20220924</json.version>
+		<metadata-extractor.version>2.7.2</metadata-extractor.version>
+		<http-components.version>4.5.14</http-components.version>
+		<commons-io.version>2.11.0</commons-io.version>
+		<commons-lang.version>2.6</commons-lang.version>
+		<javax-ws.version>2.0.1</javax-ws.version>
+		<javax-servlet.version>3.0.1</javax-servlet.version>
+		<javax-mail.version>1.4</javax-mail.version>
+		<halbuilder-standard.version>4.0.1</halbuilder-standard.version>
+		<jackson.version>2.14.2</jackson.version>
+		<log4j.version>2.19.0</log4j.version>
+		<log4j-web.version>2.17.2</log4j-web.version>
+		<slf4j-api.version>2.0.3</slf4j-api.version>
+		<mockito.version>2.28.2</mockito.version>
+		<junit.version>4.13.2</junit.version>
+		<jersey.version>2.17</jersey.version>
+		<jersey-multipart.version>1.19.4</jersey-multipart.version>
+		<maven-compiler.version>2.5.1</maven-compiler.version>
+		<maven-war.version>2.6</maven-war.version>
+		<maven-surefire>2.19</maven-surefire>
+		<maven-properties>1.0.0</maven-properties>
+		<maven-assembly>3.3.0</maven-assembly>
+	</properties>
+
+	<profiles>
+		<profile>
+			<id>Dev</id>
+			<properties>
+				<env>dev</env>
+			</properties>
+		</profile>
+		<profile>
+			<id>Dev-cfec-map</id>
+			<properties>
+				<env>dev-cfec-map</env>
+			</properties>
+		</profile>
+		<profile>
+			<id>Local</id>
+			<properties>
+				<env>local</env>
+			</properties>
+		</profile>
+		<profile>
+			<activation>
+		        <activeByDefault>true</activeByDefault>
+		    </activation>
+			<id>Local-cfec-map</id>
+			<properties>
+				<env>local-cfec-map</env>
+			</properties>
+		</profile>
+		<profile>
+			<id>Local-cfec-map-legacy</id>
+			<properties>
+				<env>local-cfec-map-legacy</env>
+			</properties>
+		</profile>
+		<profile>
+<!--			<activation>-->
+<!--		        <activeByDefault>true</activeByDefault>-->
+<!--		    </activation>-->
+			<id>Release</id>
+			<properties>
+				<env>release</env>
+			</properties>
+			 
+		</profile>
+	</profiles>
+
+	<build>
+		<finalName>cfn-rest-server</finalName>
+		<filters>
+		    <filter>config-${env}.properties</filter>
+		</filters>
+		<resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <excludes>
+                	<exclude>old-conf/**</exclude>
+                	<exclude>certificats/**</exclude>
+                	
+                </excludes>
+            </resource>
+        </resources>
+		
+		
+<!-- 		<resources> -->
+<!--             <resource> -->
+<!--                 <directory>${project.basedir}</directory> -->
+<!--                 <filtering>true</filtering> -->
+<!--                 <includes> -->
+<!--                     <include>deployit-manifest.xml</include> -->
+<!--                 </includes> -->
+<!--             </resource> -->
+<!--         </resources> -->
+		
+		
+		
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${maven-compiler.version}</version>
+				<configuration>
+					<source>${maven.compiler.source}</source>
+					<target>${maven.compiler.target}</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>${maven-war.version}</version>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>${maven-surefire}</version>
+				<configuration>
+					<skip>${skipSurefirePlugin}</skip>
+				</configuration>
+			</plugin>
+			<plugin>
+	            <groupId>org.codehaus.mojo</groupId>
+	            <artifactId>properties-maven-plugin</artifactId>
+	            <version>${maven-properties}</version>
+	            <executions>
+	                <execution>
+	                    <phase>generate-resources</phase>
+	                    <goals>
+	                        <goal>write-project-properties</goal>
+	                    </goals>
+	                    <configuration>
+	                        <outputFile>${project.build.outputDirectory}/configFiles.properties</outputFile>
+	                    </configuration>
+	                </execution>
+	            </executions>
+	        </plugin>
+			<plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>${maven-assembly}</version>
+                <executions>
+                    <execution>
+                        <id>zip</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/main/assembly/zip.xml</descriptor>
+                            </descriptors>
+                            <finalName>${project.artifactId}</finalName>
+<!--                             <attach>false</attach> -->
+                            <appendAssemblyId>false</appendAssemblyId>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            
+            
+           
+      
+        </plugins>
+	</build>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.glassfish.jersey</groupId>
+				<artifactId>jersey-bom</artifactId>
+				<version>${jersey.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.apache.tika</groupId>
+			<artifactId>tika-core</artifactId>
+			<version>${tika.version}</version>
+			<scope>compile</scope>
+		</dependency> 
+		
+		<dependency>
+			<groupId>javax.mail</groupId>
+			<artifactId>mail</artifactId>
+			<version>${javax-mail.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.nimbusds</groupId>
+			<artifactId>nimbus-jose-jwt</artifactId>
+			<version>${nimbus-jose-jwt.version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.opensaml</groupId>
+			<artifactId>opensaml</artifactId>
+			<version>${opensaml.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>${json.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.drewnoakes</groupId>
+			<artifactId>metadata-extractor</artifactId>
+			<version>${metadata-extractor.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>${http-components.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpmime</artifactId>
+			<version>${http-components.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>${commons-io.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.ws.rs</groupId>
+			<artifactId>javax.ws.rs-api</artifactId>
+			<version>${javax-ws.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>${commons-lang.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>${javax-servlet.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		
+		<dependency>
+			<groupId>com.theoryinpractise</groupId>
+			<artifactId>halbuilder-standard</artifactId>
+			<version>${halbuilder-standard.version}</version>
+		</dependency>
+		
+		<!--  Dépendances LOGGING -->
+		<dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-web</artifactId>
+            <version>${log4j-web.version}</version>
+        </dependency>        
+		<dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j.version}</version>
+      		</dependency>      		
+      	<dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j.version}</version>	            
+   		</dependency>   		
+   		<dependency>
+		    <groupId>org.slf4j</groupId>
+		    <artifactId>slf4j-api</artifactId>
+		    <version>${slf4j-api.version}</version>
+		</dependency>
+		
+        <!-- Dépendances Test Unitaires -->        
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>        
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-api-mockito2</artifactId>
+            <version>2.0.7</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-module-junit4</artifactId>
+            <version>2.0.7</version>
+            <scope>test</scope>
+        </dependency>        
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junit.version}</version>
+			<scope>test</scope>
+		</dependency>
+		
+		<!-- Dependances JERSEY -->
+		<dependency>
+			<groupId>org.glassfish.jersey.media</groupId>
+			<artifactId>jersey-media-multipart</artifactId>
+			<version>${jersey.version}</version>
+		</dependency>		
+		<dependency>
+		    <groupId>com.sun.jersey.contribs</groupId>
+		    <artifactId>jersey-multipart</artifactId>
+		    <version>${jersey-multipart.version}</version>
+		</dependency>				
+		<dependency>
+			<groupId>org.glassfish.jersey.containers</groupId>
+			<artifactId>jersey-container-servlet-core</artifactId>
+			<version>${jersey.version}</version>			
+		</dependency>		
+		<dependency>
+		    <groupId>org.glassfish.jersey.media</groupId>
+		    <artifactId>jersey-media-json-jackson</artifactId>
+		    <version>${jersey.version}</version>		    
+		</dependency>
+		<dependency>
+		    <groupId>org.glassfish.jersey.media</groupId>
+		    <artifactId>jersey-media-moxy</artifactId>
+		    <version>2.26</version>		    
+		</dependency>
+		<dependency>
+		    <groupId>org.glassfish.jersey.media</groupId>
+		    <artifactId>jersey-media-json-jackson</artifactId>
+		    <version>${jersey.version}</version>		    
+		</dependency>
+		<dependency>
+		    <groupId>org.glassfish.jersey.ext</groupId>
+		    <artifactId>jersey-entity-filtering</artifactId>
+		    <version>${jersey.version}</version>
+		</dependency>
+		
+		<!-- Dépendances JACKSON -->		
+		<dependency>
+		    <groupId>com.fasterxml.jackson.jaxrs</groupId>
+		    <artifactId>jackson-jaxrs-json-provider</artifactId>
+		    <version>${jackson.version}</version>
+		</dependency>
+		
+		<dependency>
+		    <groupId>com.fasterxml.jackson.core</groupId>
+		    <artifactId>jackson-core</artifactId>
+		    <version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.fasterxml.jackson.core</groupId>
+		    <artifactId>jackson-databind</artifactId>
+		    <version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.fasterxml.jackson.core</groupId>
+		    <artifactId>jackson-annotations</artifactId>
+		    <version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.fasterxml.jackson.jaxrs</groupId>
+		    <artifactId>jackson-jaxrs-base</artifactId>
+		    <version>${jackson.version}</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.fasterxml.jackson.module</groupId>
+		    <artifactId>jackson-module-jaxb-annotations</artifactId>
+		    <version>${jackson.version}</version>
+		</dependency>
+		
+	</dependencies>
+</project>
